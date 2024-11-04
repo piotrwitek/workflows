@@ -31,9 +31,9 @@ jobs:
       - name: Run CI steps for Workflow 2
         run: echo "Running CI steps for Workflow 2"
       - name: Create status file
-        run: echo "workflow2=completed" >> status.txt
+        run: echo "workflow2=completed" >> status2.txt
       - name: Cache status file
         uses: actions/cache@v3
         with:
-          path: status.txt
+          path: status2.txt
           key: ${{ runner.os }}-workflow2-status
