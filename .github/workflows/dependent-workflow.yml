@@ -12,20 +12,34 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Restore status file from Workflow 1
+      - name: Restore status1 file from Workflow 1
         uses: actions/cache@v3
         with:
-          path: status.txt
+          path: status1.txt
           key: ${{ runner.os }}-workflow1-status
-      - name: Restore status file from Workflow 2
+      - name: Check if status file exists
+        run: |
+          if [ -f status1.txt ]; then
+            echo "status.txt exists"
+          else
+            echo "status.txt does not exist"
+            exit 1
+      - name: Restore status2 file from Workflow 2
         uses: actions/cache@v3
         with:
-          path: status.txt
+          path: status2.txt
           key: ${{ runner.os }}-workflow2-status
+      - name: Check if status2 file exists
+        run: |
+          if [ -f status2.txt ]; then
+            echo "status2.txt exists"
+          else
+            echo "status2.txt does not exist"
+            exit 1
       - name: Check status file
         id: check_status
         run: |
-          if grep -q "workflow1=completed" status.txt && grep -q "workflow2=completed" status.txt; then
+          if grep -q "workflow1=completed" status1.txt && grep -q "workflow2=completed" status2.txt; then
             echo "Both workflows completed"
             echo "::set-output name=status::success"
           else
