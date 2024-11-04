@@ -11,5 +11,38 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Cancel ongoing dependent workflows
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const runs = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'dependent-workflow.yml',
+              status: 'in_progress'
+            });
+            for (const run of runs.data.workflow_runs) {
+              await github.actions.cancelWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id
+              });
+            }
       - name: Run CI steps for Workflow 1
         run: echo "Running CI steps for Workflow 1"
+      - name: Update status file
+        run: echo "workflow1=completed" >> status.txt
+      - name: Commit status file
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync('status.txt', 'utf8');
+            await github.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: 'status.txt',
+              message: 'Update status file for Workflow 1',
+              content: Buffer.from(content).toString('base64'),
+              sha: context.sha
+            });
