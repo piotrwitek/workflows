@@ -41,13 +41,13 @@ jobs:
           script: |
             const cacheKey1 = '${{ runner.os }}-workflow1-status';
             const cacheKey2 = '${{ runner.os }}-workflow2-status';
-            const cacheList = await github.actions.listRepoCaches({
+            const cacheList = await github.rest.actions.listRepoCaches({
               owner: context.repo.owner,
               repo: context.repo.repo
             });
             for (const cache of cacheList.data.actions_caches) {
               if (cache.key === cacheKey1 || cache.key === cacheKey2) {
-                await github.actions.deleteRepoCache({
+                await github.rest.actions.deleteRepoCache({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   cache_id: cache.id
