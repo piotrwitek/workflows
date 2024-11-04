@@ -1,0 +1,16 @@
+name: Dependent Workflow
+
+on:
+  workflow_run:
+    workflows: ["Triggering Workflow 1", "Triggering Workflow 2"]
+    types:
+      - completed
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run dependent steps
+        run: echo "Running dependent steps"
