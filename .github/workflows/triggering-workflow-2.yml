@@ -11,5 +11,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Cancel ongoing dependent workflows
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const runs = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'dependent-workflow.yml',
+              status: 'in_progress'
+            });
+            for (const run of runs.data.workflow_runs) {
+              await github.actions.cancelWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id
+              });
+            }
       - name: Run CI steps for Workflow 2
         run: echo "Running CI steps for Workflow 2"
+      - name: Update status file
+        run: echo "workflow2=completed" >> status.txt
+      - name: Cache status file
+        uses: actions/cache@v3
+        with:
+          path: status.txt
+          key: ${{ runner.os }}-workflow2-status
