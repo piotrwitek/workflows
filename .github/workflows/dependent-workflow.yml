@@ -12,5 +12,45 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Restore status file from Workflow 1
+        uses: actions/cache@v3
+        with:
+          path: status.txt
+          key: ${{ runner.os }}-workflow1-status
+      - name: Restore status file from Workflow 2
+        uses: actions/cache@v3
+        with:
+          path: status.txt
+          key: ${{ runner.os }}-workflow2-status
+      - name: Check status file
+        id: check_status
+        run: |
+          if grep -q "workflow1=completed" status.txt && grep -q "workflow2=completed" status.txt; then
+            echo "Both workflows completed"
+            echo "::set-output name=status::success"
+          else
+            echo "Waiting for both workflows to complete"
+            exit 1
       - name: Run dependent steps
+        if: steps.check_status.outputs.status == 'success'
         run: echo "Running dependent steps"
+      - name: Clear cache
+        if: steps.check_status.outputs.status == 'success'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const cacheKey1 = '${{ runner.os }}-workflow1-status';
+            const cacheKey2 = '${{ runner.os }}-workflow2-status';
+            const cacheList = await github.actions.listRepoCaches({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            for (const cache of cacheList.data.actions_caches) {
+              if (cache.key === cacheKey1 || cache.key === cacheKey2) {
+                await github.actions.deleteRepoCache({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id
+                });
+              }
+            }
